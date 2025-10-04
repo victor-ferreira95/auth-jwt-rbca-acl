@@ -2,6 +2,8 @@ import express, { NextFunction } from "express";
 import { loadFixtures } from "./fixtures";
 import { logRequest, logResponse } from "./lib/log";
 import { userRouter } from "./router/user-router";
+import { createDatabaseConnection } from "./database";
+import jwt from "jsonwebtoken";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -29,6 +31,17 @@ app.use(
   }
 );
 
+
+app.post("/login", async (req: express.Request, res: express.Response,) => {
+  const { email, password } = req.body;
+  const { userRepository } = await createDatabaseConnection();
+  const user = await userRepository.findOne({ where: { email } });
+  if (!user || !user.comparePassword(password)) {
+    throw new Error("Invalid credentials");
+  }
+  const accessToken = jwt.sign({ name: user.name, email: user.email }, 'secret');
+  return res.json({ accessToken });
+});
 
 // Rotas da API
 app.use("", userRouter);
