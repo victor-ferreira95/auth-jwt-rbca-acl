@@ -15,6 +15,29 @@ app.use(logRequest);
 //log responses headers
 app.use(logResponse);
 
+const protectedRoutes = ["protected", "/users"];
+
+app.use((req: express.Request, res: express.Response, next: NextFunction) => {
+  const isProtectedRoute = protectedRoutes.some(route => req.url.startsWith(route));
+
+  if (!isProtectedRoute) {
+    return next();
+  }
+
+  const accessToken = req.headers.authorization?.split(" ")[1];
+  if (!accessToken) {
+    throw new Error("Access token not provided");
+  }
+
+  try {
+    const payload = jwt.verify(accessToken, "secret");
+    console.log(payload);
+  } catch (error) {
+    res.status(401).json({ message: "Invalid access token" });
+  }
+
+  next();
+})
 
 // Tratamento de erros para pre-middlewares
 app.use(
@@ -40,7 +63,7 @@ app.post("/login", async (req: express.Request, res: express.Response,) => {
     throw new Error("Invalid credentials");
   }
   const accessToken = jwt.sign({ name: user.name, email: user.email }, 'secret');
-  return res.json({ accessToken });
+  return res.json({ "access_token": accessToken });
 });
 
 // Rotas da API
@@ -60,10 +83,10 @@ function errorHandler(
   res: express.Response,
   next: NextFunction
 ) {
-  if(!error){
+  if (!error) {
     return;
   }
-  
+
   //some errors
 
   const errorDetails = {

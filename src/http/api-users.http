@@ -1,9 +1,11 @@
 @baseUrl = http://localhost:3000
+@adminAccessToken = {{ loginAction.response.body.access_token }}
 
 ### Create new user
 # @name createUserAction
 POST {{baseUrl}}/users
 Content-Type: application/json
+Authorization: Bearer {{ adminAccessToken }}
 
 {
     "name": "John Doe",
@@ -16,11 +18,13 @@ Content-Type: application/json
 
 ### Get user by ID
 GET {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{ adminAccessToken }}
 
 
 ### Update user
 PATCH {{baseUrl}}/users/{{userId}}
 Content-Type: application/json
+Authorization: Bearer {{ adminAccessToken }}
 
 {
     "name": "John Doe Updated",
@@ -30,3 +34,4 @@ Content-Type: application/json
 
 ### Delete user
 DELETE {{baseUrl}}/users/{{userId}}
+Authorization: Bearer {{ adminAccessToken }}
