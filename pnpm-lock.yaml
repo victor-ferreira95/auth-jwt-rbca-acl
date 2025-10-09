@@ -8,6 +8,9 @@ dependencies:
   bcrypt:
     specifier: ^5.1.1
     version: 5.1.1
+  dotenv:
+    specifier: ^17.2.3
+    version: 17.2.3
   express:
     specifier: ^4.21.1
     version: 4.21.2
@@ -696,6 +699,11 @@ packages:
 
   /dotenv@16.6.1:
     resolution: {integrity: sha512-uBq4egWHTcTt33a72vpSG0z3HnPuIl6NqYcTrKEg2azoEyl2hpW0zqlxysq2pK9HlDIHyHyakeYaYnSAwd8bow==}
+    engines: {node: '>=12'}
+    dev: false
+
+  /dotenv@17.2.3:
+    resolution: {integrity: sha512-JVUnt+DUIzu87TABbhPmNfVdBDt18BLOWjMUFJMSi/Qqg7NTYtabbvSNJGOJ7afbRuv9D/lngizHtP7QyLQ+9w==}
     engines: {node: '>=12'}
     dev: false
 

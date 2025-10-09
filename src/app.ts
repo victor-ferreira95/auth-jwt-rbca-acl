@@ -2,8 +2,11 @@ import express, { NextFunction } from "express";
 import { loadFixtures } from "./fixtures";
 import { logRequest, logResponse } from "./lib/log";
 import { userRouter } from "./router/user-router";
-import { createDatabaseConnection } from "./database";
-import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+import { InvalidAccessTokenError, InvalidCredentialsError, TokenNotProvidedError } from "./errors";
+import { AuthenticationService, createAuthenticationService } from "./services/AuthenticationService";
+
+dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,17 +29,18 @@ app.use((req: express.Request, res: express.Response, next: NextFunction) => {
 
   const accessToken = req.headers.authorization?.split(" ")[1];
   if (!accessToken) {
-    throw new Error("Access token not provided");
+    next(new TokenNotProvidedError());
+    return;
   }
 
   try {
-    const payload = jwt.verify(accessToken, "secret");
+    const payload = AuthenticationService.verifyAccessToken(accessToken);
     console.log(payload);
-  } catch (error) {
-    res.status(401).json({ message: "Invalid access token" });
+    next();
+  } catch (e) {
+    next(new InvalidAccessTokenError({ options: { cause: e } }));
+    return;
   }
-
-  next();
 })
 
 // Tratamento de erros para pre-middlewares
@@ -55,15 +59,15 @@ app.use(
 );
 
 
-app.post("/login", async (req: express.Request, res: express.Response,) => {
+app.post("/login", async (req: express.Request, res: express.Response, next: NextFunction) => {
   const { email, password } = req.body;
-  const { userRepository } = await createDatabaseConnection();
-  const user = await userRepository.findOne({ where: { email } });
-  if (!user || !user.comparePassword(password)) {
-    throw new Error("Invalid credentials");
+  try {
+    const authService = await createAuthenticationService();
+    const accessToken = await authService.login(email, password);
+    return res.json({ "access_token": accessToken });
+  } catch (error) {
+    next(error);
   }
-  const accessToken = jwt.sign({ name: user.name, email: user.email }, 'secret');
-  return res.json({ "access_token": accessToken });
 });
 
 // Rotas da API
@@ -102,5 +106,22 @@ function errorHandler(
     }
     return value;
   }, 2));
+
+  //some errors
+  if (error instanceof TokenNotProvidedError) {
+    res.status(401).send({ message: "Token not provided" });
+    return;
+  }
+
+  if (error instanceof InvalidAccessTokenError) {
+    res.status(401).send({ message: "Invalid access token" });
+    return;
+  }
+
+  if (error instanceof InvalidCredentialsError) {
+    res.status(401).send({ message: "Invalid credentials" });
+    return;
+  }
+
   res.status(500).send({ message: "Internal server error" });
 }
