@@ -9,3 +9,11 @@ Content-Type: application/json
     "email": "admin@user.com",
     "password": "admin"
 }
+
+###
+POST {{baseUrl}}/refresh-token
+Content-Type: application/json
+
+{
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiQWRtaW4gVXNlciIsImVtYWlsIjoiYWRtaW5AdXNlci5jb20iLCJpYXQiOjE3NjIxODIyNjgsImV4cCI6MTc2Mjc4NzA2OH0.fPqUrZchRRA9duvG96J7x8zleymjg780pS6-AjFs3Ok"
+}

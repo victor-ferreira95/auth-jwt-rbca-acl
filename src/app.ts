@@ -63,8 +63,24 @@ app.post("/login", async (req: express.Request, res: express.Response, next: Nex
   const { email, password } = req.body;
   try {
     const authService = await createAuthenticationService();
-    const accessToken = await authService.login(email, password);
-    return res.json({ "access_token": accessToken });
+    const tokens = await authService.login(email, password);
+    return res.json(tokens);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post("/refresh-token", async (req: express.Request, res: express.Response, next: NextFunction) => {
+  const { refresh_token } = req.body || req.headers.authorization?.replace("Bearer ", "");
+  if (!refresh_token) {
+    next(new TokenNotProvidedError());
+    return;
+  }
+
+  try {
+    const authService = await createAuthenticationService();
+    const tokens = await authService.refreshToken(refresh_token);
+    return res.json(tokens);
   } catch (error) {
     next(error);
   }
