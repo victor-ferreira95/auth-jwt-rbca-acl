@@ -3,9 +3,10 @@ import { loadFixtures } from "./fixtures";
 import { logRequest, logResponse } from "./lib/log";
 import { userRouter } from "./router/user-router";
 import dotenv from "dotenv";
-import { InvalidAccessTokenError, InvalidCredentialsError, InvalidRefreshTokenError, TokenExpiredError, TokenNotProvidedError } from "./errors";
+import { InvalidAccessTokenError, InvalidCredentialsError, InvalidRefreshTokenError, NotFoundError, TokenExpiredError, TokenNotProvidedError } from "./errors";
 import { AuthenticationService, createAuthenticationService } from "./services/AuthenticationService";
 import { TokenExpiredError as JsonWebTokenTokenExpiredError } from "jsonwebtoken";
+import { createUserService } from "./services/UserService";
 
 dotenv.config();
 
@@ -19,9 +20,9 @@ app.use(logRequest);
 //log responses headers
 app.use(logResponse);
 
-const protectedRoutes = ["protected", "/users"];
+const protectedRoutes = ["/protected", "/users"];
 
-app.use((req: express.Request, res: express.Response, next: NextFunction) => {
+app.use(async (req: express.Request, res: express.Response, next: NextFunction) => {
   const isProtectedRoute = protectedRoutes.some(route => req.url.startsWith(route));
 
   if (!isProtectedRoute) {
@@ -37,6 +38,9 @@ app.use((req: express.Request, res: express.Response, next: NextFunction) => {
   try {
     const payload = AuthenticationService.verifyAccessToken(accessToken);
     console.log(payload);
+    const userService = await createUserService();
+    const user = await userService.findById(+payload.sub);
+    req.user = user!;
     next();
   } catch (e) {
     if (e instanceof JsonWebTokenTokenExpiredError) {
@@ -99,6 +103,10 @@ app.post("/refresh-token", async (req: express.Request, res: express.Response, n
   }
 });
 
+app.get("/protected", (req: express.Request, res: express.Response) => {
+  res.status(200).json(req.user)
+});
+
 // Rotas da API
 app.use("", userRouter);
 
@@ -154,6 +162,11 @@ function errorHandler(
 
   if (error instanceof TokenExpiredError) {
     res.status(401).send({ message: "Token expired" });
+    return;
+  }
+
+  if (error instanceof NotFoundError) {
+    res.status(404).send({ message: error.message });
     return;
   }
 

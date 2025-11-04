@@ -1,7 +1,7 @@
 import { Repository } from "typeorm";
 import { User } from "../entities/User";
 import jwt from "jsonwebtoken";
-import { InvalidCredentialsError, InvalidRefreshTokenError } from "../errors";
+import { InvalidCredentialsError, InvalidRefreshTokenError, NotFoundError } from "../errors";
 import { createDatabaseConnection } from "../database";
 
 export class AuthenticationService {
@@ -22,7 +22,7 @@ export class AuthenticationService {
     return jwt.sign(
       { name: user.name, email: user.email },
       process.env.JWT_SECRET as string,
-      { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN as any }
+      { expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN as any, subject: user.id.toString() }
     );
   }
 
@@ -35,10 +35,13 @@ export class AuthenticationService {
   }
 
   static verifyAccessToken(token: string): {
+    sub: string;
     name: string;
     email: string;
+    iat: number;
   } {
     return jwt.verify(token, process.env.JWT_SECRET as string) as {
+      sub: string;
       name: string;
       email: string;
       iat: number;
@@ -46,10 +49,13 @@ export class AuthenticationService {
   }
 
   static verifyRefreshToken(token: string): {
+    sub: string;
     name: string;
     email: string;
+    iat: number;
   } {
     return jwt.verify(token, process.env.JWT_SECRET as string) as {
+      sub: string;
       name: string;
       email: string;
       iat: number;
@@ -59,9 +65,9 @@ export class AuthenticationService {
   async refreshToken(refreshToken: string): Promise<{ access_token: string, refresh_token: string }> {
     try {
       const payload = AuthenticationService.verifyRefreshToken(refreshToken);
-      const user = await this.userRepository.findOne({ where: { email: payload.email } });
+      const user = await this.userRepository.findOne({ where: { id: +payload.sub } });
       if (!user) {
-        throw new InvalidCredentialsError();
+        throw new NotFoundError({ message: 'User not found' });
       }
       return {
         access_token: AuthenticationService.generateAccessToken(user),
