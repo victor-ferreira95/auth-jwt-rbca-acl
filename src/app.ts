@@ -3,8 +3,9 @@ import { loadFixtures } from "./fixtures";
 import { logRequest, logResponse } from "./lib/log";
 import { userRouter } from "./router/user-router";
 import dotenv from "dotenv";
-import { InvalidAccessTokenError, InvalidCredentialsError, TokenNotProvidedError } from "./errors";
+import { InvalidAccessTokenError, InvalidCredentialsError, InvalidRefreshTokenError, TokenExpiredError, TokenNotProvidedError } from "./errors";
 import { AuthenticationService, createAuthenticationService } from "./services/AuthenticationService";
+import { TokenExpiredError as JsonWebTokenTokenExpiredError } from "jsonwebtoken";
 
 dotenv.config();
 
@@ -38,6 +39,10 @@ app.use((req: express.Request, res: express.Response, next: NextFunction) => {
     console.log(payload);
     next();
   } catch (e) {
+    if (e instanceof JsonWebTokenTokenExpiredError) {
+      next(new TokenExpiredError({ options: { cause: e } }));
+      return;
+    }
     next(new InvalidAccessTokenError({ options: { cause: e } }));
     return;
   }
@@ -81,8 +86,16 @@ app.post("/refresh-token", async (req: express.Request, res: express.Response, n
     const authService = await createAuthenticationService();
     const tokens = await authService.refreshToken(refresh_token);
     return res.json(tokens);
-  } catch (error) {
-    next(error);
+  } catch (e) {
+    if (e instanceof JsonWebTokenTokenExpiredError) {
+      next(new TokenExpiredError({ options: { cause: e } }));
+      return;
+    }
+    if (e instanceof InvalidRefreshTokenError) {
+      next(new InvalidRefreshTokenError({ options: { cause: e } }));
+      return;
+    }
+    next(e);
   }
 });
 
@@ -136,6 +149,11 @@ function errorHandler(
 
   if (error instanceof InvalidCredentialsError) {
     res.status(401).send({ message: "Invalid credentials" });
+    return;
+  }
+
+  if (error instanceof TokenExpiredError) {
+    res.status(401).send({ message: "Token expired" });
     return;
   }
 

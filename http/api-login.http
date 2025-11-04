@@ -15,5 +15,5 @@ POST {{baseUrl}}/refresh-token
 Content-Type: application/json
 
 {
-    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiQWRtaW4gVXNlciIsImVtYWlsIjoiYWRtaW5AdXNlci5jb20iLCJpYXQiOjE3NjIxODIyNjgsImV4cCI6MTc2Mjc4NzA2OH0.fPqUrZchRRA9duvG96J7x8zleymjg780pS6-AjFs3Ok"
+    "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJuYW1lIjoiQWRtaW4gVXNlciIsImVtYWlsIjoiYWRtaW5AdXNlci5jb20iLCJpYXQiOjE3NjIyMjIzOTksImV4cCI6MTc2MjIyMjQ1OX0.304rVRtPlo932tikf6VjjKUFMu5kfaMfhf3MUZ-paJQ"
 }
