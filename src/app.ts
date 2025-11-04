@@ -7,6 +7,7 @@ import { InvalidAccessTokenError, InvalidCredentialsError, InvalidRefreshTokenEr
 import { AuthenticationService, createAuthenticationService } from "./services/AuthenticationService";
 import { TokenExpiredError as JsonWebTokenTokenExpiredError } from "jsonwebtoken";
 import { createUserService } from "./services/UserService";
+import { createCartService } from "./services/CartService";
 
 dotenv.config();
 
@@ -52,6 +53,20 @@ app.use(async (req: express.Request, res: express.Response, next: NextFunction) 
   }
 })
 
+// Middleware para o carrinho do usuário
+app.use(async (req, res, next) => {
+  if (!req.user) {
+    return next();
+  }
+  const cartService = await createCartService();
+  const cartToken = await cartService.generateCartToken(req.user.id);
+  if (cartToken) {
+    res.setHeader("X-Cart", cartToken);
+  }
+  next();
+});
+
+
 // Tratamento de erros para pre-middlewares
 app.use(
   async (
@@ -66,7 +81,6 @@ app.use(
     errorHandler(error, req, res, next);
   }
 );
-
 
 app.post("/login", async (req: express.Request, res: express.Response, next: NextFunction) => {
   const { email, password } = req.body;

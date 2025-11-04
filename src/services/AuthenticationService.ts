@@ -30,7 +30,7 @@ export class AuthenticationService {
     return jwt.sign(
       { name: user.name, email: user.email },
       process.env.JWT_SECRET as string,
-      { expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN as any }
+      { expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN as any, subject: user.id.toString() }
     );
   }
 
@@ -39,12 +39,16 @@ export class AuthenticationService {
     name: string;
     email: string;
     iat: number;
+    exp: number;
   } {
-    return jwt.verify(token, process.env.JWT_SECRET as string) as {
+    return jwt.verify(token, process.env.JWT_SECRET as string, {
+      algorithms: ["HS256"]
+    }) as {
       sub: string;
       name: string;
       email: string;
       iat: number;
+      exp: number;
     };
   }
 
@@ -53,12 +57,16 @@ export class AuthenticationService {
     name: string;
     email: string;
     iat: number;
+    exp: number;
   } {
-    return jwt.verify(token, process.env.JWT_SECRET as string) as {
+    return jwt.verify(token, process.env.JWT_SECRET as string, {
+      algorithms: ["HS256"]
+    }) as {
       sub: string;
       name: string;
       email: string;
       iat: number;
+      exp: number;
     };
   }
 
@@ -74,6 +82,7 @@ export class AuthenticationService {
         refresh_token: AuthenticationService.generateRefreshToken(user)
       };
     } catch (error) {
+      console.error(error);
       throw new InvalidRefreshTokenError({ options: { cause: error } });
     }
   }
