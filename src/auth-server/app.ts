@@ -94,7 +94,7 @@ app.post("/login", async (req: express.Request, res: express.Response, next: Nex
 });
 
 app.post("/refresh-token", async (req: express.Request, res: express.Response, next: NextFunction) => {
-  const { refresh_token } = req.body || req.headers.authorization?.replace("Bearer ", "");
+  const refresh_token = req.body?.refresh_token || req.headers.authorization?.replace("Bearer ", "");
   if (!refresh_token) {
     next(new TokenNotProvidedError());
     return;
