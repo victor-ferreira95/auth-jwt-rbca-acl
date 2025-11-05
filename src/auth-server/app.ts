@@ -1,6 +1,6 @@
 import express, { NextFunction } from "express";
 import { loadFixtures } from "./fixtures";
-import { logRequest, logResponse } from "./lib/log";
+import { logRequest, logResponse } from "../lib/log";
 import { userRouter } from "./router/user-router";
 import dotenv from "dotenv";
 import { InvalidAccessTokenError, InvalidCredentialsError, InvalidRefreshTokenError, NotFoundError, TokenExpiredError, TokenNotProvidedError } from "./errors";
